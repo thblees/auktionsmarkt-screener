@@ -7,6 +7,9 @@ on:
   workflow_dispatch:
     # Erlaubt manuellen Start über GitHub Actions UI
 
+permissions:
+  contents: write
+
 jobs:
   update-screener:
     runs-on: ubuntu-latest
