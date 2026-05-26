@@ -1,0 +1,44 @@
+name: Daily Screener Update
+
+on:
+  schedule:
+    # Läuft montags bis freitags um 21:15 UTC (kurz nach US-Marktschluss 17:00 ET)
+    - cron: '15 21 * * 1-5'
+  workflow_dispatch:
+    # Erlaubt manuellen Start über GitHub Actions UI
+
+jobs:
+  update-screener:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Auktionsmarkt Screener
+        run: python screener.py
+
+      - name: Commit and push generated dashboard
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Actions Bot"
+          git add index.html
+          # Nur committen wenn sich etwas geändert hat
+          git diff --staged --quiet || git commit -m "🔄 Daily screener update $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
